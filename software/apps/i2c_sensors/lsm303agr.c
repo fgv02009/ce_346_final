@@ -21,7 +21,8 @@ static const nrf_twi_mngr_t* i2c_manager = NULL;
 static uint8_t i2c_reg_read(uint8_t i2c_addr, uint8_t reg_addr) {
   uint8_t rx_buf = 0;
   nrf_twi_mngr_transfer_t const read_transfer[] = {
-    //TODO: implement me
+    NRF_TWI_MNGR_WRITE(i2c_addr, &reg_addr, 2, NRF_TWI_MNGR_NO_STOP),
+    NRF_TWI_MNGR_READ(i2c_addr, &rx_buf, 1, 0)
   };
   nrf_twi_mngr_perform(i2c_manager, NULL, read_transfer, 2, NULL);
 
@@ -35,6 +36,16 @@ static uint8_t i2c_reg_read(uint8_t i2c_addr, uint8_t reg_addr) {
 static void i2c_reg_write(uint8_t i2c_addr, uint8_t reg_addr, uint8_t data) {
   //TODO: implement me
   //Note: there should only be a single two-byte transfer to be performed
+  //printf("reg address: %d\n", reg_addr);
+  //printf("data: %d\n", data);
+  uint8_t buffer[] = {reg_addr, data};
+  //uint16_t full_data = ((uint16_t)reg_addr << 8) | (uint16_t)data; 
+  //printf("full_data: %d\n", full_data);
+  nrf_twi_mngr_transfer_t const write_transfer[] = {
+    NRF_TWI_MNGR_WRITE(i2c_addr, &buffer, sizeof(buffer), 0)
+  };
+
+  nrf_twi_mngr_perform(i2c_manager, NULL, write_transfer, 1, NULL);
 }
 
 // Initialize and configure the LSM303AGR accelerometer/magnetometer
@@ -61,6 +72,7 @@ void lsm303agr_init(const nrf_twi_mngr_t* i2c) {
   // Always returns the same value if working
   uint8_t result = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_WHO_AM_I_REG);
   //TODO: check the result of the Accelerometer WHO AM I register
+  //printf("RESULTS of agr who am i %d\n", result);
 
   // ---Initialize Magnetometer---
 
@@ -78,7 +90,7 @@ void lsm303agr_init(const nrf_twi_mngr_t* i2c) {
   // Read WHO AM I register
   result = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_WHO_AM_I_REG);
   //TODO: check the result of the Magnetometer WHO AM I register
-
+  //printf("RESULTS of mag who am i %d\n", result);
   // ---Initialize Temperature---
 
   // Enable temperature sensor
@@ -90,22 +102,25 @@ void lsm303agr_init(const nrf_twi_mngr_t* i2c) {
 // Return measurement as floating point value in degrees C
 float lsm303agr_read_temperature(void) {
   //TODO: implement me
-
-  return 0.0;
+  uint8_t lsb_temp = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_TEMP_L);
+  uint8_t msb_temp = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_TEMP_H);
+  uint16_t reading = ((uint16_t)msb_temp << 8) | (uint16_t)lsb_temp;
+  printf("READING: %d\n", reading);
+  float sensitivity = 1.0/256.0;
+  float bias = 25.0;
+  float celcius = (float)reading*sensitivity + bias;
+  return celcius;
 }
 
 lsm303agr_measurement_t lsm303agr_read_accelerometer(void) {
   //TODO: implement me
-
   lsm303agr_measurement_t measurement = {0};
   return measurement;
 }
 
 lsm303agr_measurement_t lsm303agr_read_magnetometer(void) {
   //TODO: implement me
-
   lsm303agr_measurement_t measurement = {0};
-
   return measurement;
 }
 

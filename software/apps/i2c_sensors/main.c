@@ -32,7 +32,7 @@ int main(void) {
   // Loop forever
   while (1) {
     // Print output
-    //TODO: implement me!
+    printf("celcius reading: %.2f\n", lsm303agr_read_temperature());
 
     nrf_delay_ms(1000);
   }
