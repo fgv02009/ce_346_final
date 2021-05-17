@@ -114,7 +114,23 @@ float lsm303agr_read_temperature(void) {
 
 lsm303agr_measurement_t lsm303agr_read_accelerometer(void) {
   //TODO: implement me
-  lsm303agr_measurement_t measurement = {0};
+  uint8_t lsb_acc_x = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_X_L);
+  uint8_t msb_acc_x = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_X_H);
+  uint8_t lsb_acc_y = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Y_L);
+  uint8_t msb_acc_y = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Y_H);
+  uint8_t lsb_acc_z = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Z_L);
+  uint8_t msb_acc_z = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Z_H);
+  //printf("just checking: %d\n", lsb_acc_z);
+  uint16_t x_reading = (((uint16_t)msb_acc_x << 8) | (uint16_t)lsb_acc_x) >> 6;
+  uint16_t y_reading = (((uint16_t)msb_acc_y << 8) | (uint16_t)lsb_acc_y) >> 6;
+  uint16_t z_reading = (((uint16_t)msb_acc_z << 8) | (uint16_t)lsb_acc_z) >> 6;
+  //printf("just checking: %d\n", z_reading);
+  float scalar = 3.9;
+  uint16_t final_x = round(x_reading*scalar);
+  uint16_t final_y = round(y_reading*scalar);
+  float final_z = z_reading*scalar;
+  //printf("CHECKING AT END: %d\n", final_z);
+  lsm303agr_measurement_t measurement = {final_x, final_y, final_z};
   return measurement;
 }
 

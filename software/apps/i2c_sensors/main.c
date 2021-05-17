@@ -34,6 +34,9 @@ int main(void) {
     // Print output
     printf("celcius reading: %.2f\n", lsm303agr_read_temperature());
 
+    //not quite working yet
+    //lsm303agr_measurement_t acc_meas = lsm303agr_read_accelerometer();
+    //printf("accel readings: %.2f, %.2f, %.2f\n", acc_meas.x_axis, acc_meas.y_axis, acc_meas.z_axis);
     nrf_delay_ms(1000);
   }
 }
