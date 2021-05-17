@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "lsm303agr.h"
 #include "nrf_delay.h"
@@ -120,15 +121,15 @@ lsm303agr_measurement_t lsm303agr_read_accelerometer(void) {
   uint8_t msb_acc_y = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Y_H);
   uint8_t lsb_acc_z = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Z_L);
   uint8_t msb_acc_z = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Z_H);
-  printf("lsb:: %x\n", lsb_acc_z);
-  printf("msb: %x\n", msb_acc_z);
+  //printf("lsb:: %x\n", lsb_acc_z);
+  //printf("msb: %x\n", msb_acc_z);
   int16_t x_reading = ((uint16_t)msb_acc_x << 8) | (uint16_t)lsb_acc_x;
   x_reading = x_reading >> 6;
   int16_t y_reading = ((uint16_t)msb_acc_y << 8) | (uint16_t)lsb_acc_y;
   y_reading = y_reading >> 6;
   int16_t z_reading = ((uint16_t)msb_acc_z << 8) | (uint16_t)lsb_acc_z;
   z_reading = z_reading >> 6;
-  printf("z after combining: %x\n", z_reading);
+  //printf("z after combining: %x\n", z_reading);
   float scalar = 3.9;
   float final_x = x_reading*scalar/1000;
   float final_y = y_reading*scalar/1000;
@@ -140,7 +141,29 @@ lsm303agr_measurement_t lsm303agr_read_accelerometer(void) {
 
 lsm303agr_measurement_t lsm303agr_read_magnetometer(void) {
   //TODO: implement me
-  lsm303agr_measurement_t measurement = {0};
+  uint8_t lsb_mag_x = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_X_REG_L);
+  uint8_t msb_mag_x = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_X_REG_H);
+  uint8_t lsb_mag_y = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_Y_REG_L);
+  uint8_t msb_mag_y = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_Y_REG_H);
+  uint8_t lsb_mag_z = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_Z_REG_L);
+  uint8_t msb_mag_z = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_Z_REG_H);
+  //printf("lsb: %d\n", lsb_mag_z);
+  //printf("msb: %d\n", msb_mag_z);
+  int16_t x_reading = ((uint16_t)msb_mag_x << 8) | (uint16_t)lsb_mag_x;
+  int16_t y_reading = ((uint16_t)msb_mag_y << 8) | (uint16_t)lsb_mag_y;
+  int16_t z_reading = ((uint16_t)msb_mag_z << 8) | (uint16_t)lsb_mag_z;
+  float sensitivity = 1.5;
+  float final_x = x_reading*sensitivity/10;
+  float final_y = y_reading*sensitivity/10;
+  float final_z = z_reading*sensitivity/10;
+  lsm303agr_measurement_t measurement = {final_x, final_y, final_z};
   return measurement;
+}
+
+float calculate_tilt(void){
+  lsm303agr_measurement_t acc_meas = lsm303agr_read_accelerometer();
+  float phi_rads = atan(sqrt(acc_meas.x_axis*acc_meas.x_axis + acc_meas.y_axis*acc_meas.y_axis)/acc_meas.z_axis);
+  float phi_deg = phi_rads*(180/M_PI);
+  return phi_deg;
 }
 
