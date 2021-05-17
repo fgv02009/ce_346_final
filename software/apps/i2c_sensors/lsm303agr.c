@@ -42,7 +42,7 @@ static void i2c_reg_write(uint8_t i2c_addr, uint8_t reg_addr, uint8_t data) {
   //uint16_t full_data = ((uint16_t)reg_addr << 8) | (uint16_t)data; 
   //printf("full_data: %d\n", full_data);
   nrf_twi_mngr_transfer_t const write_transfer[] = {
-    NRF_TWI_MNGR_WRITE(i2c_addr, &buffer, sizeof(buffer), 0)
+    NRF_TWI_MNGR_WRITE(i2c_addr, &buffer, 2, 0)
   };
 
   nrf_twi_mngr_perform(i2c_manager, NULL, write_transfer, 1, NULL);
@@ -104,8 +104,8 @@ float lsm303agr_read_temperature(void) {
   //TODO: implement me
   uint8_t lsb_temp = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_TEMP_L);
   uint8_t msb_temp = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_TEMP_H);
-  uint16_t reading = ((uint16_t)msb_temp << 8) | (uint16_t)lsb_temp;
-  printf("READING: %d\n", reading);
+  int16_t reading = ((uint16_t)msb_temp << 8) | (uint16_t)lsb_temp;
+  //printf("READING: %d\n", reading);
   float sensitivity = 1.0/256.0;
   float bias = 25.0;
   float celcius = (float)reading*sensitivity + bias;
@@ -120,15 +120,19 @@ lsm303agr_measurement_t lsm303agr_read_accelerometer(void) {
   uint8_t msb_acc_y = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Y_H);
   uint8_t lsb_acc_z = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Z_L);
   uint8_t msb_acc_z = i2c_reg_read(LSM303AGR_ACC_ADDRESS, LSM303AGR_ACC_OUT_Z_H);
-  //printf("just checking: %d\n", lsb_acc_z);
-  uint16_t x_reading = (((uint16_t)msb_acc_x << 8) | (uint16_t)lsb_acc_x) >> 6;
-  uint16_t y_reading = (((uint16_t)msb_acc_y << 8) | (uint16_t)lsb_acc_y) >> 6;
-  uint16_t z_reading = (((uint16_t)msb_acc_z << 8) | (uint16_t)lsb_acc_z) >> 6;
-  //printf("just checking: %d\n", z_reading);
+  printf("lsb:: %x\n", lsb_acc_z);
+  printf("msb: %x\n", msb_acc_z);
+  int16_t x_reading = ((uint16_t)msb_acc_x << 8) | (uint16_t)lsb_acc_x;
+  x_reading = x_reading >> 6;
+  int16_t y_reading = ((uint16_t)msb_acc_y << 8) | (uint16_t)lsb_acc_y;
+  y_reading = y_reading >> 6;
+  int16_t z_reading = ((uint16_t)msb_acc_z << 8) | (uint16_t)lsb_acc_z;
+  z_reading = z_reading >> 6;
+  printf("z after combining: %x\n", z_reading);
   float scalar = 3.9;
-  uint16_t final_x = round(x_reading*scalar);
-  uint16_t final_y = round(y_reading*scalar);
-  float final_z = z_reading*scalar;
+  float final_x = x_reading*scalar/1000;
+  float final_y = y_reading*scalar/1000;
+  float final_z = z_reading*scalar/1000;
   //printf("CHECKING AT END: %d\n", final_z);
   lsm303agr_measurement_t measurement = {final_x, final_y, final_z};
   return measurement;
