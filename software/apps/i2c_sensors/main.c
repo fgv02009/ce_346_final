@@ -32,11 +32,11 @@ int main(void) {
   // Loop forever
   while (1) {
     // Print output
-    //printf("celcius reading: %.2f\n", lsm303agr_read_temperature());
+    printf("celcius reading: %.2f\n", lsm303agr_read_temperature());
 
     //acc readings
-    //lsm303agr_measurement_t acc_meas = lsm303agr_read_accelerometer();
-    //printf("accel readings: %.2f, %.2f, %.2f\n", acc_meas.x_axis, acc_meas.y_axis, acc_meas.z_axis);
+    lsm303agr_measurement_t acc_meas = lsm303agr_read_accelerometer();
+    printf("accel readings: %.2f, %.2f, %.2f\n", acc_meas.x_axis, acc_meas.y_axis, acc_meas.z_axis);
   
     //mag readings
     //lsm303agr_measurement_t mag_meas = lsm303agr_read_magnetometer();

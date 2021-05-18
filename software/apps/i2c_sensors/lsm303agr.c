@@ -141,21 +141,21 @@ lsm303agr_measurement_t lsm303agr_read_accelerometer(void) {
 
 lsm303agr_measurement_t lsm303agr_read_magnetometer(void) {
   //TODO: implement me
-  uint8_t lsb_mag_x = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_X_REG_L);
-  uint8_t msb_mag_x = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_X_REG_H);
-  uint8_t lsb_mag_y = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_Y_REG_L);
-  uint8_t msb_mag_y = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_Y_REG_H);
-  uint8_t lsb_mag_z = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_Z_REG_L);
-  uint8_t msb_mag_z = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OFFSET_Z_REG_H);
+  uint8_t msb_mag_x = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OUT_X_H_REG);
+  uint8_t lsb_mag_x = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OUT_X_L_REG);
+  uint8_t msb_mag_y = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OUT_Y_H_REG);
+  uint8_t lsb_mag_y = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OUT_Y_L_REG);
+  uint8_t msb_mag_z = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OUT_Z_H_REG);
+  uint8_t lsb_mag_z = i2c_reg_read(LSM303AGR_MAG_ADDRESS, LSM303AGR_MAG_OUT_Z_L_REG);
   //printf("lsb: %d\n", lsb_mag_z);
   //printf("msb: %d\n", msb_mag_z);
-  int16_t x_reading = ((uint16_t)msb_mag_x << 8) | (uint16_t)lsb_mag_x;
-  int16_t y_reading = ((uint16_t)msb_mag_y << 8) | (uint16_t)lsb_mag_y;
-  int16_t z_reading = ((uint16_t)msb_mag_z << 8) | (uint16_t)lsb_mag_z;
+  int16_t x_reading = ((uint16_t)msb_mag_x << 8) | lsb_mag_x;
+  int16_t y_reading = ((uint16_t)msb_mag_y << 8) | lsb_mag_y;
+  int16_t z_reading = ((uint16_t)msb_mag_z << 8) | lsb_mag_z;
   float sensitivity = 1.5;
-  float final_x = x_reading*sensitivity/10;
-  float final_y = y_reading*sensitivity/10;
-  float final_z = z_reading*sensitivity/10;
+  float final_x = x_reading*sensitivity/10.0;
+  float final_y = y_reading*sensitivity/10.0;
+  float final_z = z_reading*sensitivity/10.0;
   lsm303agr_measurement_t measurement = {final_x, final_y, final_z};
   return measurement;
 }
