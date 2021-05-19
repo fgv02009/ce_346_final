@@ -18,7 +18,13 @@ void win();
 void game_init();
 void start_level();
 void init_led_states();
+void move_down();
+void move_up();
+void move_left();
+void move_right();
 uint32_t char_ind;
+
+
 
 typedef struct displayConfig {
    char* display_str;

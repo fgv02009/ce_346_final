@@ -30,27 +30,18 @@ int main(void) {
   // Initialize the LSM303AGR accelerometer/magnetometer sensor
   lsm303agr_init(&twi_mngr_instance);
 
+  //init led matrix
   led_matrix_init();
-
-
 
   // Loop forever
   while (1) {
     // Print output
-    printf("celcius reading: %.2f\n", lsm303agr_read_temperature());
-
-    //acc readings
-    lsm303agr_measurement_t acc_meas = lsm303agr_read_accelerometer();
-    printf("accel readings: %.2f, %.2f, %.2f\n", acc_meas.x_axis, acc_meas.y_axis, acc_meas.z_axis);
-  
-    //mag readings
-    //lsm303agr_measurement_t mag_meas = lsm303agr_read_magnetometer();
-    //printf("mag readings: %.2f, %.2f, %.2f\n", mag_meas.x_axis, mag_meas.y_axis, mag_meas.z_axis);
     
     //calculate tilt
-    float z_tilt_deg = calculate_tilt();
-    printf("z tilt reading: %.2f\n", z_tilt_deg);
-    nrf_delay_ms(1000);
+    lsmagr303_tilt_measurement meas = calculate_tilt();
+    if(meas.x_tilt > 30.0){
+      move_left();
+    }
   }
 }
 
