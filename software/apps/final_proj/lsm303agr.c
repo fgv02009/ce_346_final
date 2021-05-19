@@ -160,10 +160,29 @@ lsm303agr_measurement_t lsm303agr_read_magnetometer(void) {
   return measurement;
 }
 
-float calculate_tilt(void){
+//float calculate_tilt(void){
+//  lsm303agr_measurement_t acc_meas = lsm303agr_read_accelerometer();
+//  float phi_rads = atan(sqrt(acc_meas.x_axis*acc_meas.x_axis + acc_meas.y_axis*acc_meas.y_axis)/acc_meas.z_axis);
+//  float phi_deg = phi_rads*(180/M_PI);
+//  return phi_deg;
+//}
+
+lsm303agr_tilt_measurement_t calculate_tilt(void){
   lsm303agr_measurement_t acc_meas = lsm303agr_read_accelerometer();
-  float phi_rads = atan(sqrt(acc_meas.x_axis*acc_meas.x_axis + acc_meas.y_axis*acc_meas.y_axis)/acc_meas.z_axis);
-  float phi_deg = phi_rads*(180/M_PI);
-  return phi_deg;
+
+  //x
+  float x_rads = atan(acc_meas.x_axis/(sqrt(acc_meas.y_axis*acc_meas.y_axis + acc_meas.z_axis*acc_meas.z_axis)));
+  float x_degrees = x_rads*(180/M_PI);
+
+  //y
+  float y_rads = atan(acc_meas.y_axis/(sqrt(acc_meas.x_axis*acc_meas.x_axis + acc_meas.z_axis*acc_meas.z_axis)));
+  float y_degrees = y_rads*(180/M_PI);
+  //z
+  float z_rads = atan(sqrt(acc_meas.x_axis*acc_meas.x_axis + acc_meas.y_axis*acc_meas.y_axis)/acc_meas.z_axis);
+  float z_degrees = z_rads*(180/M_PI);
+  lsm303agr_tilt_measurement_t meas = {x_degrees, y_degrees, z_degrees};
+  return meas;
+
 }
+
 

@@ -15,6 +15,13 @@ typedef struct {
   float z_axis;
 } lsm303agr_measurement_t;
 
+typedef struct {
+  float x_tilt;
+  float y_tilt;
+  float z_tilt;
+} lsm303agr_tilt_measurement_t;
+
+
 // Register definitions for accelerometer
 typedef enum {
   LSM303AGR_ACC_STATUS_REG_AUX = 0X07,
@@ -104,4 +111,4 @@ lsm303agr_measurement_t lsm303agr_read_magnetometer(void);
 
 
 //tilt
-float calculate_tilt(void);
+lsm303agr_tilt_measurement_t calculate_tilt(void);
