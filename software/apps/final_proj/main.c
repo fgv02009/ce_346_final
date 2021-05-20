@@ -32,16 +32,27 @@ int main(void) {
 
   //init led matrix
   led_matrix_init();
-
+  //game_state = Waiting;
+  game_init();
+  nrf_delay_ms(3000);
   // Loop forever
   while (1) {
     // Print output
     
     //calculate tilt
-    lsmagr303_tilt_measurement meas = calculate_tilt();
-    if(meas.x_tilt > 30.0){
-      move_left();
+    if(game_state == Playing){  
+      lsm303agr_tilt_measurement_t meas = calculate_tilt();
+      if(meas.x_tilt > 20.0){
+        move_right();
+      }else if(meas.x_tilt < -20.0) {
+        move_left();
+      }else if(meas.y_tilt < -20.0){
+        move_down();
+      }else if(meas.y_tilt > 20.0) {
+        move_up();
+      }
     }
   }
+  nrf_delay_ms(200);
 }
 

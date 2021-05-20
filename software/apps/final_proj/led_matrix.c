@@ -22,8 +22,8 @@ APP_TIMER_DEF(start_timer);
 APP_TIMER_DEF(display_timer);
 
 //APP_TIMER_DEF(my_timer_3);
-enum state{Waiting, Playing, Between};
-enum state game_state = Waiting;
+//enum state{Waiting, Playing, Between};
+//enum state game_state = Waiting;
 volatile bool led_states[5][5] = {false};
 uint32_t curr_row = 1;
 uint32_t led_rows[] = {0, LED_ROW1, LED_ROW2, LED_ROW3, LED_ROW4, LED_ROW5};
@@ -37,32 +37,44 @@ bool led_states_x[5][5] = {{true, false, false, false, true},
 bool reset = false;
 uint32_t players_location[2] = {0,0};
 uint32_t level = 1;
-//uint32_t char_ind = 0;
+uint32_t char_ind = 0;
+uint8_t seconds_per_level = 5;
 
 void game_init(){
   //pick random place for player and lose led
+  game_state = Waiting;
   init_led_states();
+  app_timer_init();
   start_level();
+  printf("initing game\n");
   app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
   app_timer_start(display_timer, 40, NULL);
 }
 
 void win(){
-  printf("10 seconds passed, you win\n");
+ printf("10 seconds passed, you beat level %d\n", level);
  
- // if(level==3){
- //   win_game();
- // } else (){
- //   level = level + 1;
- //   game_state = Between;
- //   //wait a few seconds;
- //   //start_level()
- // }
+ if(level==3){
+    printf("you won the whole game\n");
+    char *win_str = "You win!";
+    //this may need to be a timer -- one for display_str and one for display_char
+    display_string(win_str);
+    game_state = Waiting;
+    //win_game();
+  } else {
+    level = level + 1;
+    game_state = Between;
+    //wait a few seconds;
+    nrf_delay_ms(3000);
+    
+    start_level();
+  }
 }
 
 void start_level(){
+  printf("starting level %d\n", level);
   app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
-  app_timer_start(my_timer_1, 32768*10, NULL);
+  app_timer_start(start_timer, 32768*seconds_per_level, NULL);
   game_state = Playing;
 }
 
@@ -145,9 +157,6 @@ void display_char(char* ch){
 }
 
 void display(){
-  //print_matrix();
-  //printf("in display\n");
-  //print_matrix();
   //deal with prev row
   uint32_t prev_row = curr_row == 1 ? 5 : curr_row - 1;
   nrf_gpio_pin_write(led_rows[prev_row], false);
@@ -157,6 +166,10 @@ void display(){
   //deal with next row
   nrf_gpio_pin_write(led_rows[curr_row], true);
   curr_row = curr_row < 5 ? curr_row + 1 : 1;
+}
+
+void update_char_pointer(uint8_t len){
+  char_ind++;
 }
 
 void print_matrix(){
@@ -178,13 +191,11 @@ void move_left(){
 }
 
 void move_right(){
-  printf("in move right\n");
   if(players_location[1] != 4){
     led_states[players_location[0]][players_location[1]] = false;
     players_location[1] = players_location[1] +1;
     led_states[players_location[0]][players_location[1]] = true;
   }
-  print_matrix();
 }
 
 void move_up(){

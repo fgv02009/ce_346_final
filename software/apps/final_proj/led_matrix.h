@@ -23,7 +23,8 @@ void move_up();
 void move_left();
 void move_right();
 uint32_t char_ind;
-
+enum state{Waiting, Playing, Between};
+enum state game_state;
 
 
 typedef struct displayConfig {
