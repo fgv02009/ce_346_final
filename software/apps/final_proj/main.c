@@ -35,24 +35,27 @@ int main(void) {
   //game_state = Waiting;
   game_init();
   nrf_delay_ms(3000);
+  
+  //not sure if this is a good idea?
+  lsm303agr_tilt_measurement_t prev_meas = {0.0,0.0,0.0};
   // Loop forever
   while (1) {
     // Print output
-    
     //calculate tilt
     if(game_state == Playing){  
       lsm303agr_tilt_measurement_t meas = calculate_tilt();
-      if(meas.x_tilt > 20.0){
+      if((meas.x_tilt > 20.0) && (meas.x_tilt > prev_meas.x_tilt)){
         move_right();
-      }else if(meas.x_tilt < -20.0) {
+      }else if((meas.x_tilt < -20.0) && (meas.x_tilt < prev_meas.x_tilt)) {
         move_left();
-      }else if(meas.y_tilt < -20.0){
+      }else if((meas.y_tilt < -20.0) && (meas.y_tilt < prev_meas.y_tilt)){
         move_down();
-      }else if(meas.y_tilt > 20.0) {
+      }else if((meas.y_tilt > 20.0) && (meas.y_tilt > prev_meas.y_tilt)){
         move_up();
       }
+      prev_meas = meas;
     }
   }
-  nrf_delay_ms(200);
+  nrf_delay_ms(500);
 }
 
