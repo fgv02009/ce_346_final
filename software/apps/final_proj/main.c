@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "nrf.h"
 #include "nrf_delay.h"
 #include "nrf_twi_mngr.h"
 
@@ -16,6 +17,14 @@
 
 // Global variables
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 1, 0);
+
+void GPIOTE_IRQHandler(void) {
+  // Clear interrupt event
+  NRF_GPIOTE->EVENTS_IN[0] = 0;
+
+  // Implement me
+  printf("button pressed in interrupt\n");
+}
 
 int main(void) {
   printf("Board started!\n");
@@ -29,6 +38,13 @@ int main(void) {
 
   // Initialize the LSM303AGR accelerometer/magnetometer sensor
   lsm303agr_init(&twi_mngr_instance);
+  
+  //setup button interrupt
+  NRF_GPIOTE->CONFIG[0] = 0x20E01;
+  NRF_GPIOTE->INTENSET = 1;
+  uint8_t gpiote_priority = 4;
+  NVIC_SetPriority(GPIOTE_IRQn, gpiote_priority);
+  NVIC_EnableIRQ(GPIOTE_IRQn);
 
   //init led matrix
   led_matrix_init();
