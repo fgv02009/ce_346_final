@@ -20,6 +20,8 @@ APP_TIMER_DEF(up_timer);
 APP_TIMER_DEF(down_timer);
 APP_TIMER_DEF(start_timer);
 APP_TIMER_DEF(display_timer);
+APP_TIMER_DEF(display_string_timer);
+APP_TIMER_DEF(move_char_timer);
 
 //APP_TIMER_DEF(my_timer_3);
 //enum state{Waiting, Playing, Between};
@@ -38,7 +40,7 @@ bool reset = false;
 uint32_t players_location[2] = {0,0};
 uint32_t level = 1;
 uint32_t char_ind = 0;
-uint8_t seconds_per_level = 5;
+uint8_t seconds_per_level = 2;
 
 void game_init(){
   //pick random place for player and lose led
@@ -58,7 +60,12 @@ void win(){
     printf("you won the whole game\n");
     char *win_str = "You win!";
     //this may need to be a timer -- one for display_str and one for display_char
+    app_timer_create(&display_string_timer, APP_TIMER_MODE_REPEATED, display_string);
+    app_timer_create(&move_char_timer, APP_TIMER_MODE_REPEATED, update_char_pointer);
+    app_timer_start(display_string_timer, 40, win_str);
+    app_timer_start(move_char_timer, 32768, NULL);
     display_string(win_str);
+    
     game_state = Waiting;
     //win_game();
   } else {
@@ -129,6 +136,8 @@ void display_string(void* display_str){
       led_matrix_init();
       reset = true;
     }
+    app_timer_stop(display_string_timer);
+    app_timer_stop(move_char_timer);
     return;
   }
   if(reset) reset = false;
@@ -138,12 +147,7 @@ void display_string(void* display_str){
 
 void display_char(char* ch){
   int ascii_i = *ch;
-  if(ascii_i == 32) printf("SPACE");
   uint8_t* font_row = font[ascii_i];
-  if(ascii_i == 32){
-    printf("SPACE\n");
-    printf("font row: %#18x\n", font_row);
-  }
   for(int i = 0; i < 5; i++){
     uint8_t row = font_row[i];
     //printf("font[%d][%d] = %#2x\n",ascii_i, i, row); 
@@ -168,7 +172,7 @@ void display(){
   curr_row = curr_row < 5 ? curr_row + 1 : 1;
 }
 
-void update_char_pointer(uint8_t len){
+void update_char_pointer(){
   char_ind++;
 }
 
