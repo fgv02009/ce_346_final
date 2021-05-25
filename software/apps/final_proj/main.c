@@ -18,13 +18,13 @@
 // Global variables
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 1, 0);
 
-void GPIOTE_IRQHandler(void) {
+//void GPIOTE_IRQHandler(void) {
   // Clear interrupt event
-  NRF_GPIOTE->EVENTS_IN[0] = 0;
+//  NRF_GPIOTE->EVENTS_IN[0] = 0;
 
   // Implement me
-  printf("button pressed in interrupt\n");
-}
+//  printf("button pressed in interrupt\n");
+//}
 
 int main(void) {
   printf("Board started!\n");
@@ -60,18 +60,18 @@ int main(void) {
     //calculate tilt
     if(game_state == Playing){  
       lsm303agr_tilt_measurement_t meas = calculate_tilt();
-      if((meas.x_tilt > 20.0) && (meas.x_tilt > prev_meas.x_tilt)){
+      if((meas.x_tilt > 20.0)){ //&& (meas.x_tilt > prev_meas.x_tilt)){
         move_right();
-      }else if((meas.x_tilt < -20.0) && (meas.x_tilt < prev_meas.x_tilt)) {
+      }else if((meas.x_tilt < -20.0)){ //&& (meas.x_tilt < prev_meas.x_tilt)) {
         move_left();
-      }else if((meas.y_tilt < -20.0) && (meas.y_tilt < prev_meas.y_tilt)){
+      }else if((meas.y_tilt < -20.0)){ //&& (meas.y_tilt < prev_meas.y_tilt)){
         move_down();
-      }else if((meas.y_tilt > 20.0) && (meas.y_tilt > prev_meas.y_tilt)){
+      }else if((meas.y_tilt > 20.0)){ //&& (meas.y_tilt > prev_meas.y_tilt)){
         move_up();
       }
       prev_meas = meas;
     }
   }
-  nrf_delay_ms(500);
+  //nrf_delay_ms(100);
 }
 
