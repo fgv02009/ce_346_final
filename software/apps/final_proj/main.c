@@ -17,6 +17,9 @@
 
 // Global variables
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 1, 0);
+uint32_t lr_distance = 0;
+uint32_t ud_distance = 0;
+
 
 //void GPIOTE_IRQHandler(void) {
   // Clear interrupt event
@@ -61,13 +64,17 @@ int main(void) {
     if(game_state == Playing){  
       lsm303agr_tilt_measurement_t meas = calculate_tilt();
       if((meas.x_tilt > 20.0)){ //&& (meas.x_tilt > prev_meas.x_tilt)){
-        move_right();
+        lr_distance++;
+        if(lr_distance % 10 == 0) move_right();
       }else if((meas.x_tilt < -20.0)){ //&& (meas.x_tilt < prev_meas.x_tilt)) {
-        move_left();
+        lr_distance--;
+	if(lr_distance % 10 == 0) move_left();
       }else if((meas.y_tilt < -20.0)){ //&& (meas.y_tilt < prev_meas.y_tilt)){
-        move_down();
+        ud_distance--;
+	if(ud_distance % 10 == 0) move_down();
       }else if((meas.y_tilt > 20.0)){ //&& (meas.y_tilt > prev_meas.y_tilt)){
-        move_up();
+        ud_distance++;
+	if(ud_distance % 10 == 0) move_up();
       }
       prev_meas = meas;
     }

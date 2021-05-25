@@ -42,8 +42,6 @@ uint32_t lose_location[2] = {4,4};
 uint32_t level = 1;
 uint32_t char_ind = 0;
 uint8_t seconds_per_level = 10;
-int32_t lr_distance = 0;
-int32_t ud_distance = 0;
 
 void game_init(){
   //pick random place for player and lose led
@@ -192,47 +190,34 @@ void print_matrix(){
 }
 
 void move_left(){
-  //prev_lr_distance = lr_distance;
-  lr_distance--;
   if(players_location[1] != 0){
-    if(lr_distance % 10 == 0){	  
-      led_states[players_location[0]][players_location[1]] = false;
-      players_location[1] = players_location[1] - 1;
-      led_states[players_location[0]][players_location[1]] = true;
-    }
+    led_states[players_location[0]][players_location[1]] = false;
+    players_location[1] = players_location[1] - 1;
+    led_states[players_location[0]][players_location[1]] = true;
   }
 }
 
 void move_right(){
-  lr_distance++;
   if(players_location[1] != 4){
-    if(lr_distance % 10 == 0){
-      led_states[players_location[0]][players_location[1]] = false;
-      players_location[1] = players_location[1] +1;
-      led_states[players_location[0]][players_location[1]] = true;
-    }
+    led_states[players_location[0]][players_location[1]] = false;
+    players_location[1] = players_location[1] +1;
+    led_states[players_location[0]][players_location[1]] = true;
   }
 }
 
 void move_up(){
-  ud_distance++;	
   if(players_location[0] != 0){
-    if(ud_distance % 10 == 0){
-      led_states[players_location[0]][players_location[1]] = false;
-      players_location[0] = players_location[0] - 1;
-      led_states[players_location[0]][players_location[1]] = true;
-    }
+    led_states[players_location[0]][players_location[1]] = false; 
+    players_location[0] = players_location[0] - 1;
+    led_states[players_location[0]][players_location[1]] = true;
   }
 }
 
 void move_down(){
-  ud_distance--;
   if(players_location [0] != 4){
-    if(ud_distance % 10 == 0){
-      led_states[players_location[0]][players_location[1]] = false;
-      players_location[0] = players_location[0] + 1;
-      led_states[players_location[0]][players_location[1]] = true;
-    }
+    led_states[players_location[0]][players_location[1]] = false;
+    players_location[0] = players_location[0] + 1;
+    led_states[players_location[0]][players_location[1]] = true;
   }
 }
 
