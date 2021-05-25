@@ -95,6 +95,7 @@ void init_led_states(){
 }
 
 static void display_x(){
+  printf("in displayx");
   //deal with prev row
   uint32_t prev_row = curr_row == 1 ? 5 : curr_row - 1;
   nrf_gpio_pin_write(led_rows[prev_row], false);
@@ -121,11 +122,15 @@ void clear_leds(){
 }
 
 void lose(){
+  printf("YOU LOST\n");
+  app_timer_stop(start_timer);
+  //id like to display x here but not working
   app_timer_create(&my_timer_1, APP_TIMER_MODE_REPEATED, display_x);
   app_timer_start(my_timer_1, 40, NULL);
   nrf_delay_ms(2000);
+  /////
   clear_leds();
-  app_timer_stop(my_timer_1);
+  //app_timer_stop(my_timer_1);
 }
 
 void display_string(void* display_str){
@@ -164,6 +169,11 @@ void display_char(char* ch){
 }
 
 void display(){
+  if(players_location[0] == lose_location[0] && players_location[1] == lose_location[1]){
+    app_timer_stop(display_timer);
+    lose();
+    return;
+  }
   //deal with prev row
   uint32_t prev_row = curr_row == 1 ? 5 : curr_row - 1;
   nrf_gpio_pin_write(led_rows[prev_row], false);
@@ -248,38 +258,4 @@ void led_matrix_init(void) {
   clear_leds();
 };
 
-//  app_timer_init();
-//  app_timer_create(&my_timer_1, APP_TIMER_MODE_REPEATED, display_x);
-//  app_timer_create(&right_timer, APP_TIMER_MODE_SINGLE_SHOT, move_right);
-//  app_timer_create(&left_timer, APP_TIMER_MODE_SINGLE_SHOT, move_left);
-//  app_timer_create(&up_timer, APP_TIMER_MODE_SINGLE_SHOT, move_up);
-//  app_timer_create(&down_timer, APP_TIMER_MODE_SINGLE_SHOT, move_down);
-//  //app_timer_create(&my_timer_2, APP_TIMER_MODE_REPEATED, toggle_bottom_right);
-//  //app_timer_start(my_timer_1, 40, NULL);
-//  //nrf_gpio_pin_set(LED_ROW1);
-//  //app_timer_start(my_timer_2, 300, NULL);
-//  
-//  init_led_states();
-//  //app_timer_start(my_timer_1, 40, NULL);
-////  app_timer_start(right_timer, 30000, NULL);
-////  app_timer_start(right_timer, 60000, NULL);
-////  app_timer_start(down_timer, 90000, NULL);
-////  app_timer_start(down_timer, 120000, NULL);
-////  app_timer_start(left_timer, 150000, NULL);
-////  app_timer_start(left_timer, 180000, NULL);
-////  app_timer_start(left_timer, 210000, NULL);
-////  app_timer_start(up_timer, 240000, NULL);
-//
-//  //move_right();
-//  //move_right();
-//  //move_down();
-//  //move_down();
-//  //move_left();
-//  //move_left();
-//  //move_left(); //this should do nothing
-//  //move_up();
-//  //move_up();
-//  lose();
-//}
-//
 
