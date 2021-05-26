@@ -33,6 +33,8 @@ uint8_t new_coords[2];
 
 
 void pin_event_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action){
+  //this is working
+  //check if waiting, and start game
   printf("in here\n");
 }
 
@@ -74,18 +76,6 @@ int main(void) {
   //NVIC_EnableIRQ(GPIOTE_IRQn);
   
   //try interrupt with drivers instead:
-//  nrfx_gpiote_in_config_t gpiote_in_config;
-//  nrf_drv_gpiote_in_config_t config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
-//  ret_code_t err_code = nrf_drv_gpiote_in_init(14, &config, pin_event_handler);
-//  nrf_drv_gpiote_in_event_enable(14, false);
-  
-  //uint32_t err_code;
- // if(!nrf_drv_gpiote_is_init())
-  //{
-    //err_code = nrf_drv_gpiote_init();
-  //}
-
-
   ret_code_t err_code;
 
   if (!nrf_drv_gpiote_is_init())
