@@ -37,14 +37,19 @@ bool led_states_x[5][5] = {{true, false, false, false, true},
 			   {true, false, false, false, true}};
 
 bool reset = false;
-uint32_t players_location[2] = {0,0};
-uint32_t lose_location[2] = {4,4};
+//uint32_t players_location[2] = {0,0};
+//uint32_t lose_location[2] = {4,4};
 uint32_t level = 1;
 uint32_t char_ind = 0;
 uint8_t seconds_per_level = 10;
 
 void game_init(){
   //pick random place for player and lose led
+  players_location[0] = 0;
+  players_location[1] = 0;
+  lose_location[0] = 4;
+  lose_location[1] = 4;
+
   game_state = Waiting;
   init_led_states();
   app_timer_init();
@@ -95,7 +100,7 @@ void init_led_states(){
 }
 
 static void display_x(){
-  printf("in displayx");
+  //printf("in displayx");
   //deal with prev row
   uint32_t prev_row = curr_row == 1 ? 5 : curr_row - 1;
   nrf_gpio_pin_write(led_rows[prev_row], false);
@@ -125,13 +130,20 @@ void lose(){
   printf("YOU LOST\n");
   app_timer_stop(start_timer);
   //id like to display x here but not working
+  game_state = Waiting;
   app_timer_create(&my_timer_1, APP_TIMER_MODE_REPEATED, display_x);
   app_timer_start(my_timer_1, 40, NULL);
-  nrf_delay_ms(2000);
+  //nrf_delay_ms(2000);
   /////
-  clear_leds();
   //app_timer_stop(my_timer_1);
+  //clear_leds();
+  //done();
 }
+
+//void done(){
+//  app_timer_stop(my_timer_1);
+//  clear_leds();
+//}
 
 void display_string(void* display_str){
   char* cPtr;
@@ -172,6 +184,8 @@ void display(){
   if(players_location[0] == lose_location[0] && players_location[1] == lose_location[1]){
     app_timer_stop(display_timer);
     lose();
+    //nrf_delay_ms(2000);
+    //done();
     return;
   }
   //deal with prev row
