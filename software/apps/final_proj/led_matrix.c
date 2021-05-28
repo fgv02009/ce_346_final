@@ -17,6 +17,8 @@ APP_TIMER_DEF(start_timer);
 APP_TIMER_DEF(display_timer);
 APP_TIMER_DEF(display_string_timer);
 APP_TIMER_DEF(move_char_timer);
+APP_TIMER_DEF(toggle_led_timer);
+
 
 //APP_TIMER_DEF(my_timer_3);
 //enum state{Waiting, Playing, Between};
@@ -38,12 +40,14 @@ uint32_t level = 1;
 uint32_t char_ind = 0;
 uint8_t seconds_per_level = 7;
 time_t t;
+uint32_t player_flash_count = 0;
 
 
 void game_init(){
   game_state = Waiting;
   srand((unsigned) time(&t));
   start_level();
+  //should i start this and stop it after each level?
   app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
   app_timer_start(display_timer, 40, NULL);
 }
@@ -95,11 +99,25 @@ void win(){
 }
 
 void start_level(){
+  printf("in start level\n");
   set_random_positions();
   init_led_states();
+  //app_timer_create(&toggle_led_timer, APP_TIMER_MODE_REPEATED, flash_players_location);
+  //app_timer_start(toggle_led_timer, 32768, NULL);
   app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
   app_timer_start(start_timer, 32768*seconds_per_level, NULL);
   game_state = Playing;
+}
+
+void continue_level(){
+  printf("in continue level\n");
+  game_state = Playing;
+  app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
+  app_timer_start(display_timer, 40, NULL);
+  app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
+  app_timer_start(start_timer, 32768*seconds_per_level, NULL);
+  game_state = Playing;
+
 }
 
 void init_led_states(){
@@ -108,6 +126,20 @@ void init_led_states(){
   //also turn on lose led here
   led_states[lose_location[0]][lose_location[1]] = true;
   //print_matrix();
+}
+
+void flash_players_location(){
+  if((player_flash_count + 1) % 4 == 0){
+    app_timer_stop(toggle_led_timer);
+    continue_level();
+  } else {
+  //led_states[players_location[0]][players_location[1]] = !led_states[players_location[0]][players_location[1]];
+    printf("playerslocation[0] %d\n", players_location[0]);
+    printf("led: %d\n", led_rows[players_location[0]]);
+    nrf_gpio_pin_toggle(led_rows[players_location[0] + 1]);
+    //nrf_delay_ms(100);
+  }
+  player_flash_count++;
 }
 
 static void display_x(){
