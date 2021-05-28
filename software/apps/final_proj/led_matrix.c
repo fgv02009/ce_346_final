@@ -39,11 +39,14 @@ uint32_t char_ind = 0;
 uint8_t seconds_per_level = 7;
 time_t t;
 uint32_t player_flash_count = 0;
-
+uint32_t display_x_count = 0;
 
 void pre_game_setup(){
   app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
   app_timer_create(&toggle_led_timer, APP_TIMER_MODE_REPEATED, flash_players_location);
+  app_timer_create(&display_string_timer, APP_TIMER_MODE_REPEATED, display_string);
+  app_timer_create(&move_char_timer, APP_TIMER_MODE_REPEATED, update_char_pointer);
+  app_timer_create(&display_x_timer, APP_TIMER_MODE_REPEATED, display_x);
 }
 void game_init(){
   game_state = Waiting;
@@ -118,16 +121,14 @@ void win(){
     char *win_str = "You win!";
     app_timer_stop(display_timer);
     //this may need to be a timer -- one for display_str and one for display_char
-    app_timer_create(&display_string_timer, APP_TIMER_MODE_REPEATED, display_string);
-    app_timer_create(&move_char_timer, APP_TIMER_MODE_REPEATED, update_char_pointer);
     app_timer_start(display_string_timer, 40, win_str);
     app_timer_start(move_char_timer, 32768, NULL);
-//    display_string(win_str);
     
     level = 1;
     //game_state = Waiting;
     //win_game();
   } else {
+    app_timer_stop(display_timer);
     level = level + 1;
     game_state = Between;
     //wait a few seconds;
@@ -140,18 +141,9 @@ void win(){
 void lose(){
   printf("YOU LOST\n");
   app_timer_stop(start_timer);
-  //id like to display x here but not working
-  game_state = Waiting;
   app_timer_stop(display_timer);
-  app_timer_create(&display_x_timer, APP_TIMER_MODE_REPEATED, display_x);
   app_timer_start(display_x_timer, 40, NULL);
   level = 1;
-  game_state = Waiting;
-  //nrf_delay_ms(2000);
-  /////
-  //app_timer_stop(my_timer_1);
-  //clear_leds();
-  //done();
 }
 
 
@@ -171,6 +163,12 @@ void flash_players_location(){
 }
 
 void display_x(){
+  if(((display_x_count+1) % 6000) == 0){
+    printf("in turn off displayx\n");
+    app_timer_stop(display_x_timer);
+    clear_leds();
+    game_state = Waiting;
+  }
   //deal with prev row
   uint32_t prev_row = curr_row == 1 ? 5 : curr_row - 1;
   nrf_gpio_pin_write(led_rows[prev_row], false);
@@ -180,6 +178,8 @@ void display_x(){
   //deal with next row
   nrf_gpio_pin_write(led_rows[curr_row], true);
   curr_row = curr_row < 5 ? curr_row + 1 : 1;
+  
+  display_x_count++;
 }
 
 void display_string(void* display_str){

@@ -35,7 +35,11 @@ uint8_t new_coords[2];
 void pin_event_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action){
   //this is working
   //check if waiting, and start game
-  printf("in here\n");
+  printf("in button interrupt\n");
+  if(game_state == Waiting){
+    printf("in here\n");
+    game_init();
+  }
 }
 
 uint8_t* map_player_pos(){
@@ -68,30 +72,24 @@ int main(void) {
   // Initialize the LSM303AGR accelerometer/magnetometer sensor
   lsm303agr_init(&twi_mngr_instance);
   
-  //setup button interrupt
-  //NRF_GPIOTE->CONFIG[0] = 0x20E01;
-  //NRF_GPIOTE->INTENSET = 1;
-  //uint8_t gpiote_priority = 4;
-  //NVIC_SetPriority(GPIOTE_IRQn, gpiote_priority);
-  //NVIC_EnableIRQ(GPIOTE_IRQn);
   
-  //try interrupt with drivers instead:
-  ret_code_t err_code;
+// try interrupt with drivers instead -- this is messing with everything - leave out for now
+//  ret_code_t err_code;
+//
+//  if (!nrf_drv_gpiote_is_init())
+//  {
+//    err_code = nrf_drv_gpiote_init();
+//    APP_ERROR_CHECK(err_code);
+//  }
+//  
+//  nrf_drv_gpiote_in_config_t config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
+//  err_code = nrf_drv_gpiote_in_init(14, &config, pin_event_handler);
+//  APP_ERROR_CHECK(err_code);
+//  nrf_drv_gpiote_in_event_enable(14, true);
 
-  if (!nrf_drv_gpiote_is_init())
-  {
-    err_code = nrf_drv_gpiote_init();
-    APP_ERROR_CHECK(err_code);
-  }
-  
-  nrf_drv_gpiote_in_config_t config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
-  err_code = nrf_drv_gpiote_in_init(14, &config, pin_event_handler);
-  APP_ERROR_CHECK(err_code);
-  nrf_drv_gpiote_in_event_enable(14, true);
-
-  //init led matrix
   led_matrix_init();
-  //game_state = Waiting;
+  app_timer_init();
+  pre_game_setup();
   game_init();
   nrf_delay_ms(2000);
   
