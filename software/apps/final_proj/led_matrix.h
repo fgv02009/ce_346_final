@@ -23,7 +23,7 @@ void move_up();
 void move_left();
 void move_right();
 void update_char_pointer();
-//void done();
+void set_random_positions();
 uint32_t char_ind;
 enum state{Waiting, Playing, Between};
 enum state game_state;
