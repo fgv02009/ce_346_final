@@ -18,7 +18,7 @@ APP_TIMER_DEF(display_timer);
 APP_TIMER_DEF(display_string_timer);
 APP_TIMER_DEF(move_char_timer);
 APP_TIMER_DEF(toggle_led_timer);
-
+APP_TIMER_DEF(move_lose_led_timer);
 
 //APP_TIMER_DEF(my_timer_3);
 //enum state{Waiting, Playing, Between};
@@ -47,6 +47,7 @@ void pre_game_setup(){
   app_timer_create(&display_string_timer, APP_TIMER_MODE_REPEATED, display_string);
   app_timer_create(&move_char_timer, APP_TIMER_MODE_REPEATED, update_char_pointer);
   app_timer_create(&display_x_timer, APP_TIMER_MODE_REPEATED, display_x);
+  app_timer_create(&move_lose_led_timer, APP_TIMER_MODE_REPEATED, move_lose_led);
 }
 void game_init(){
   game_state = Waiting;
@@ -91,6 +92,8 @@ void continue_level(){
   game_state = Playing;
   app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
   app_timer_start(start_timer, 32768*seconds_per_level, NULL);
+  app_timer_start(move_lose_led_timer, 32768/level, NULL);
+  //app_timer_start(move_lose_led_timer, 32768, NULL);
   game_state = Playing;
 }
 
@@ -113,27 +116,48 @@ void set_random_positions(){
   lose_location[1] = l_y;
 }
 
+void move_lose_led(){
+  uint32_t old_lose_location_x = lose_location[0];
+  uint32_t old_lose_location_y = lose_location[1];
+  int32_t row_diff = lose_location[0] - players_location[0];
+  int32_t col_diff = lose_location[1] - players_location[1];
+  if(abs(row_diff) > abs(col_diff)){
+    if(row_diff < 0){
+      //move up
+      lose_location[0] = lose_location[0] + 1;
+    } else {
+      //move down
+      lose_location[0] = lose_location[0] - 1;
+    }
+  } else {
+    if(col_diff < 0){
+      //move right
+      lose_location[1] = lose_location[1] + 1;
+    } else {
+      //move left
+      lose_location[1] = lose_location[1] - 1;
+    }
+  }
+  led_states[old_lose_location_x][old_lose_location_y] = false;
+  led_states[lose_location[0]][lose_location[1]] = true;
+}
+
 void win(){
  printf("10 seconds passed, you beat level %d\n", level); 
+ app_timer_stop(display_timer);
+ app_timer_stop(move_lose_led_timer);
  if(level==3){
     game_state = Waiting;
+    level = 1;
     printf("you won the whole game\n");
     char *win_str = "You win!";
-    app_timer_stop(display_timer);
-    //this may need to be a timer -- one for display_str and one for display_char
     app_timer_start(display_string_timer, 40, win_str);
     app_timer_start(move_char_timer, 32768, NULL);
-    
-    level = 1;
-    //game_state = Waiting;
-    //win_game();
   } else {
-    app_timer_stop(display_timer);
     level = level + 1;
     game_state = Between;
     //wait a few seconds;
-    nrf_delay_ms(3000);
-    
+    nrf_delay_ms(2000);   
     start_level();
   }
 }
@@ -142,6 +166,7 @@ void lose(){
   printf("YOU LOST\n");
   app_timer_stop(start_timer);
   app_timer_stop(display_timer);
+  app_timer_stop(move_lose_led_timer);
   app_timer_start(display_x_timer, 40, NULL);
   level = 1;
 }
@@ -155,17 +180,19 @@ void flash_players_location(){
     led_states[players_location[0]][players_location[1]] = !led_states[players_location[0]][players_location[1]];
     printf("playerslocation[0] %d\n", players_location[0]);
     printf("led: %d\n", led_rows[players_location[0]]);
-    //nrf_gpio_pin_toggle(led_rows[players_location[0] + 1]);
-    //nrf_delay_ms(100);
-    //led_states[players_location[0]][players_location[1]] = true;
   }
   player_flash_count++;
 }
 
 void display_x(){
-  if(((display_x_count+1) % 6000) == 0){
+  if(((display_x_count+1) % 3000) == 0){
     printf("in turn off displayx\n");
     app_timer_stop(display_x_timer);
+    for(int i = 0; i < 5; i++){
+      for(int j = 0; j < 5; j++){
+        led_states_x[i][j] = false;
+      }
+    }
     clear_leds();
     game_state = Waiting;
   }
@@ -185,7 +212,6 @@ void display_x(){
 void display_string(void* display_str){
   char* cPtr;
   cPtr = (char*)display_str;
-  //if(char_ind >= strlen(cPtr)) char_ind = 0;
   if(char_ind >= strlen(cPtr)){
     if(!reset) {
       led_matrix_init();
@@ -207,10 +233,8 @@ void display_char(char* ch){
   uint8_t* font_row = font[ascii_i];
   for(int i = 0; i < 5; i++){
     uint8_t row = font_row[i];
-    //printf("font[%d][%d] = %#2x\n",ascii_i, i, row); 
     for(int col = 0; col < 5; col++){
       uint8_t flag = ((row>>col)&1);
-      //printf("row: %d, col: %d, flag: %d\n", row, col, flag);
       led_states[i][col] = flag;
     }
   }
@@ -221,8 +245,6 @@ void display(){
   if(players_location[0] == lose_location[0] && players_location[1] == lose_location[1]){
     app_timer_stop(display_timer);
     lose();
-    //nrf_delay_ms(2000);
-    //done();
     return;
   }
   //deal with prev row
