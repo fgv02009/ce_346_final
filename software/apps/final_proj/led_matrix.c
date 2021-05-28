@@ -29,9 +29,9 @@ uint32_t led_rows[] = {0, LED_ROW1, LED_ROW2, LED_ROW3, LED_ROW4, LED_ROW5};
 uint32_t led_cols[] = {0, LED_COL1, LED_COL2, LED_COL3, LED_COL4, LED_COL5};
 bool led_states_x[5][5] = {{true, false, false, false, true},
                            {false, true, false, true, false},
-			   {false, false, true, false, false},
-			   {false, true, false, true, false},
-			   {true, false, false, false, true}};
+         {false, false, true, false, false},
+         {false, true, false, true, false},
+         {true, false, false, false, true}};
 
 bool reset = false;
 //uint32_t players_location[2] = {0,0};
@@ -48,10 +48,63 @@ void game_init(){
   srand((unsigned) time(&t));
   start_level();
   //should i start this and stop it after each level?
-  app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
-  app_timer_start(display_timer, 40, NULL);
+  //app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
+  //app_timer_start(display_timer, 40, NULL);
 }
 
+void start_level(){
+  printf("in start level\n");
+  set_random_positions();
+  init_led_states();
+  turn_on_player_led();
+  app_timer_create(&toggle_led_timer, APP_TIMER_MODE_REPEATED, flash_players_location);
+  app_timer_start(toggle_led_timer, 32768, NULL);
+  //app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
+  //app_timer_start(start_timer, 32768*seconds_per_level, NULL);
+  game_state = Playing;
+}
+
+void init_led_states(){
+  clear_leds();  
+  led_states[players_location[0]][players_location[1]] = true;
+  //also turn on lose led here
+  led_states[lose_location[0]][lose_location[1]] = true;
+  //print_matrix();
+}
+
+void turn_on_player_led(){
+  printf("turn on player led\n");
+  nrf_gpio_pin_set(led_rows[players_location[0] + 1]);
+  nrf_gpio_pin_clear(led_rows[players_location[1] + 1]);
+}
+void clear_leds(){
+  for(int i = 0; i < 5; i++){
+    for(int j = 0; j < 5; j++){
+      led_states[i][j] = false;
+    }  
+  }
+  nrf_gpio_pin_clear(LED_ROW1);
+  nrf_gpio_pin_clear(LED_ROW2);
+  nrf_gpio_pin_clear(LED_ROW3);
+  nrf_gpio_pin_clear(LED_ROW4);
+  nrf_gpio_pin_clear(LED_ROW5);
+
+  nrf_gpio_pin_set(LED_COL1);
+  nrf_gpio_pin_set(LED_COL2);
+  nrf_gpio_pin_set(LED_COL3);
+  nrf_gpio_pin_set(LED_COL4);
+  nrf_gpio_pin_set(LED_COL5);
+}
+
+void continue_level(){
+  printf("in continue level\n");
+  game_state = Playing;
+  app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
+  app_timer_start(display_timer, 40, NULL);
+  app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
+  app_timer_start(start_timer, 32768*seconds_per_level, NULL);
+  game_state = Playing;
+}
 
 void set_random_positions(){
   int p_x = rand() % 5;
@@ -73,8 +126,7 @@ void set_random_positions(){
 }
 
 void win(){
- printf("10 seconds passed, you beat level %d\n", level);
- 
+ printf("10 seconds passed, you beat level %d\n", level); 
  if(level==3){
     printf("you won the whole game\n");
     char *win_str = "You win!";
@@ -98,81 +150,6 @@ void win(){
   }
 }
 
-void start_level(){
-  printf("in start level\n");
-  set_random_positions();
-  init_led_states();
-  //app_timer_create(&toggle_led_timer, APP_TIMER_MODE_REPEATED, flash_players_location);
-  //app_timer_start(toggle_led_timer, 32768, NULL);
-  app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
-  app_timer_start(start_timer, 32768*seconds_per_level, NULL);
-  game_state = Playing;
-}
-
-void continue_level(){
-  printf("in continue level\n");
-  game_state = Playing;
-  app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
-  app_timer_start(display_timer, 40, NULL);
-  app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
-  app_timer_start(start_timer, 32768*seconds_per_level, NULL);
-  game_state = Playing;
-
-}
-
-void init_led_states(){
-  clear_leds();  
-  led_states[players_location[0]][players_location[1]] = true;
-  //also turn on lose led here
-  led_states[lose_location[0]][lose_location[1]] = true;
-  //print_matrix();
-}
-
-void flash_players_location(){
-  if((player_flash_count + 1) % 4 == 0){
-    app_timer_stop(toggle_led_timer);
-    continue_level();
-  } else {
-  //led_states[players_location[0]][players_location[1]] = !led_states[players_location[0]][players_location[1]];
-    printf("playerslocation[0] %d\n", players_location[0]);
-    printf("led: %d\n", led_rows[players_location[0]]);
-    nrf_gpio_pin_toggle(led_rows[players_location[0] + 1]);
-    //nrf_delay_ms(100);
-  }
-  player_flash_count++;
-}
-
-static void display_x(){
-  //deal with prev row
-  uint32_t prev_row = curr_row == 1 ? 5 : curr_row - 1;
-  nrf_gpio_pin_write(led_rows[prev_row], false);
-  //change col pin states
-  bool* cols_to_write = led_states_x[curr_row-1];
-  deal_with_cols(cols_to_write);
-  //deal with next row
-  nrf_gpio_pin_write(led_rows[curr_row], true);
-  curr_row = curr_row < 5 ? curr_row + 1 : 1;
-}
-
-void clear_leds(){
-  for(int i = 0; i < 5; i++){
-    for(int j = 0; j < 5; j++){
-      led_states[i][j] = false;
-    }  
-  }
-  nrf_gpio_pin_clear(LED_ROW1);
-  nrf_gpio_pin_clear(LED_ROW2);
-  nrf_gpio_pin_clear(LED_ROW3);
-  nrf_gpio_pin_clear(LED_ROW4);
-  nrf_gpio_pin_clear(LED_ROW5);
-
-  nrf_gpio_pin_set(LED_COL1);
-  nrf_gpio_pin_set(LED_COL2);
-  nrf_gpio_pin_set(LED_COL3);
-  nrf_gpio_pin_set(LED_COL4);
-  nrf_gpio_pin_set(LED_COL5);
-}
-
 void lose(){
   printf("YOU LOST\n");
   app_timer_stop(start_timer);
@@ -189,6 +166,32 @@ void lose(){
   //done();
 }
 
+
+void flash_players_location(){
+  if((player_flash_count + 1) % 4 == 0){
+    app_timer_stop(toggle_led_timer);
+    continue_level();
+  } else {
+  //led_states[players_location[0]][players_location[1]] = !led_states[players_location[0]][players_location[1]];
+    printf("playerslocation[0] %d\n", players_location[0]);
+    printf("led: %d\n", led_rows[players_location[0]]);
+    nrf_gpio_pin_toggle(led_rows[players_location[0] + 1]);
+    //nrf_delay_ms(100);
+  }
+  player_flash_count++;
+}
+
+void display_x(){
+  //deal with prev row
+  uint32_t prev_row = curr_row == 1 ? 5 : curr_row - 1;
+  nrf_gpio_pin_write(led_rows[prev_row], false);
+  //change col pin states
+  bool* cols_to_write = led_states_x[curr_row-1];
+  deal_with_cols(cols_to_write);
+  //deal with next row
+  nrf_gpio_pin_write(led_rows[curr_row], true);
+  curr_row = curr_row < 5 ? curr_row + 1 : 1;
+}
 
 void display_string(void* display_str){
   char* cPtr;
@@ -243,18 +246,14 @@ void display(){
   curr_row = curr_row < 5 ? curr_row + 1 : 1;
 }
 
-void update_char_pointer(){
-  char_ind++;
+void deal_with_cols(bool* cols_to_write){
+  for(int i = 0; i < 5; i++){
+    nrf_gpio_pin_write(led_cols[i+1], !cols_to_write[i]);
+  }
 }
 
-void print_matrix(){
-  printf("led_states: \n");
-  for(int i = 0; i < 5; i++){
-    for(int j = 0; j < 5; j++){
-      printf("%d", led_states[i][j]);
-    }
-    printf("\n");
-  }
+void update_char_pointer(){
+  char_ind++;
 }
 
 void move_left(){
@@ -289,13 +288,6 @@ void move_down(){
   }
 }
 
-void deal_with_cols(bool* cols_to_write){
-  //not sure ill be able to get cols in an array like this?
-   for(int i = 0; i < 5; i++){
-    nrf_gpio_pin_write(led_cols[i+1], !cols_to_write[i]);
-  }
-}
-
 void led_matrix_init(void) {
   printf("in led matrix init\n");
   // initialize row pins
@@ -316,4 +308,13 @@ void led_matrix_init(void) {
   clear_leds();
 };
 
+void print_matrix(){
+  printf("led_states: \n");
+  for(int i = 0; i < 5; i++){
+    for(int j = 0; j < 5; j++){
+      printf("%d", led_states[i][j]);
+    }
+    printf("\n");
+  }
+}
 

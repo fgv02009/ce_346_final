@@ -13,6 +13,7 @@ void display();
 void print_matrix();
 void display_string(void* display_str);
 void display_char(char* ch);
+void display_x();
 void next_letter();
 void win();
 void game_init();
