@@ -157,6 +157,7 @@ void win(){
     level = level + 1;
     game_state = Between;
     //wait a few seconds;
+    clear_leds();
     nrf_delay_ms(2000);   
     start_level();
   }
