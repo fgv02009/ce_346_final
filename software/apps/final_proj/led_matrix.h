@@ -27,6 +27,7 @@ void update_char_pointer();
 void set_random_positions();
 void flash_players_location();
 void clear_leds();
+void pre_game_setup();
 uint32_t char_ind;
 enum state{Waiting, Playing, Between};
 enum state game_state;

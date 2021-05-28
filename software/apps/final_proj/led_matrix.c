@@ -34,8 +34,6 @@ bool led_states_x[5][5] = {{true, false, false, false, true},
          {true, false, false, false, true}};
 
 bool reset = false;
-//uint32_t players_location[2] = {0,0};
-//uint32_t lose_location[2] = {4,4};
 uint32_t level = 1;
 uint32_t char_ind = 0;
 uint8_t seconds_per_level = 7;
@@ -43,40 +41,30 @@ time_t t;
 uint32_t player_flash_count = 0;
 
 
+void pre_game_setup(){
+  app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
+  app_timer_create(&toggle_led_timer, APP_TIMER_MODE_REPEATED, flash_players_location);
+}
 void game_init(){
   game_state = Waiting;
   srand((unsigned) time(&t));
   start_level();
-  //should i start this and stop it after each level?
-  //app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
-  //app_timer_start(display_timer, 40, NULL);
 }
 
 void start_level(){
-  printf("in start level\n");
   set_random_positions();
   init_led_states();
-  turn_on_player_led();
-  app_timer_create(&toggle_led_timer, APP_TIMER_MODE_REPEATED, flash_players_location);
-  app_timer_start(toggle_led_timer, 32768, NULL);
-  //app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
-  //app_timer_start(start_timer, 32768*seconds_per_level, NULL);
+  app_timer_start(display_timer, 40, NULL);
+  app_timer_start(toggle_led_timer, 32768/4, NULL);
   game_state = Playing;
 }
 
 void init_led_states(){
   clear_leds();  
   led_states[players_location[0]][players_location[1]] = true;
-  //also turn on lose led here
   led_states[lose_location[0]][lose_location[1]] = true;
-  //print_matrix();
 }
 
-void turn_on_player_led(){
-  printf("turn on player led\n");
-  nrf_gpio_pin_set(led_rows[players_location[0] + 1]);
-  nrf_gpio_pin_clear(led_rows[players_location[1] + 1]);
-}
 void clear_leds(){
   for(int i = 0; i < 5; i++){
     for(int j = 0; j < 5; j++){
@@ -97,10 +85,7 @@ void clear_leds(){
 }
 
 void continue_level(){
-  printf("in continue level\n");
   game_state = Playing;
-  app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
-  app_timer_start(display_timer, 40, NULL);
   app_timer_create(&start_timer, APP_TIMER_MODE_SINGLE_SHOT, win);
   app_timer_start(start_timer, 32768*seconds_per_level, NULL);
   game_state = Playing;
@@ -128,8 +113,10 @@ void set_random_positions(){
 void win(){
  printf("10 seconds passed, you beat level %d\n", level); 
  if(level==3){
+    game_state = Waiting;
     printf("you won the whole game\n");
     char *win_str = "You win!";
+    app_timer_stop(display_timer);
     //this may need to be a timer -- one for display_str and one for display_char
     app_timer_create(&display_string_timer, APP_TIMER_MODE_REPEATED, display_string);
     app_timer_create(&move_char_timer, APP_TIMER_MODE_REPEATED, update_char_pointer);
@@ -155,6 +142,7 @@ void lose(){
   app_timer_stop(start_timer);
   //id like to display x here but not working
   game_state = Waiting;
+  app_timer_stop(display_timer);
   app_timer_create(&display_x_timer, APP_TIMER_MODE_REPEATED, display_x);
   app_timer_start(display_x_timer, 40, NULL);
   level = 1;
@@ -168,15 +156,16 @@ void lose(){
 
 
 void flash_players_location(){
-  if((player_flash_count + 1) % 4 == 0){
+  if((player_flash_count + 1) % 5 == 0){
     app_timer_stop(toggle_led_timer);
     continue_level();
   } else {
-  //led_states[players_location[0]][players_location[1]] = !led_states[players_location[0]][players_location[1]];
+    led_states[players_location[0]][players_location[1]] = !led_states[players_location[0]][players_location[1]];
     printf("playerslocation[0] %d\n", players_location[0]);
     printf("led: %d\n", led_rows[players_location[0]]);
-    nrf_gpio_pin_toggle(led_rows[players_location[0] + 1]);
+    //nrf_gpio_pin_toggle(led_rows[players_location[0] + 1]);
     //nrf_delay_ms(100);
+    //led_states[players_location[0]][players_location[1]] = true;
   }
   player_flash_count++;
 }
@@ -202,6 +191,7 @@ void display_string(void* display_str){
       led_matrix_init();
       reset = true;
     }
+    app_timer_stop(display_timer);
     app_timer_stop(display_string_timer);
     app_timer_stop(move_char_timer);
     game_state = Waiting;
