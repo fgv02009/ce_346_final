@@ -36,7 +36,7 @@ bool led_states_x[5][5] = {{true, false, false, false, true},
 bool reset = false;
 uint32_t level = 1;
 uint32_t char_ind = 0;
-uint8_t seconds_per_level = 7;
+uint8_t seconds_per_level = 10;
 time_t t;
 uint32_t player_flash_count = 0;
 uint32_t display_x_count = 0;
