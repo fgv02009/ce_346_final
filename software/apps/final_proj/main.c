@@ -93,10 +93,9 @@ int main(void) {
   game_init();
   nrf_delay_ms(2000);
   
-  //not sure if this is a good idea?
-  //lsm303agr_tilt_measurement_t prev_meas = {0.0,0.0,0.0};
   uint8_t prev_lr = players_location[0];
   uint8_t prev_ud = players_location[1];
+  float tilt_degrees = 20.0;
   // Loop forever
   while (1) {
     // Print output
@@ -104,26 +103,22 @@ int main(void) {
     //calculate tilt
     if(game_state == Playing){  
       lsm303agr_tilt_measurement_t meas = calculate_tilt();
-      if((meas.x_tilt > 20.0)){ //&& (meas.x_tilt > prev_meas.x_tilt)){
+      if((meas.x_tilt > tilt_degrees)){ //&& (meas.x_tilt > prev_meas.x_tilt)){
         if(lr_distance < 40) lr_distance++;
 	uint8_t new_lr = map_player_pos()[0];
 	if(prev_lr != new_lr) move_right();
-        //if(lr_distance % 10 == 0) move_right();
-      }else if((meas.x_tilt < -20.0)){ //&& (meas.x_tilt < prev_meas.x_tilt)) {
+      }else if((meas.x_tilt < (-1*tilt_degrees))){ //&& (meas.x_tilt < prev_meas.x_tilt)) {
         if(lr_distance > 0) lr_distance--;
 	uint8_t new_lr = map_player_pos()[0];
 	if(prev_lr != new_lr) move_left();
-	//if(lr_distance % 10 == 0) move_left();
-      }else if((meas.y_tilt < -20.0)){ //&& (meas.y_tilt < prev_meas.y_tilt)){
+      }else if((meas.y_tilt < (-1*tilt_degrees))){ //&& (meas.y_tilt < prev_meas.y_tilt)){
         if(ud_distance > 0) ud_distance--;
 	uint8_t new_ud = map_player_pos()[1];
 	if(prev_ud != new_ud) move_down();
-	//if(ud_distance % 10 == 0) move_down();
-      }else if((meas.y_tilt > 20.0)){ //&& (meas.y_tilt > prev_meas.y_tilt)){
+      }else if((meas.y_tilt > tilt_degrees)){ //&& (meas.y_tilt > prev_meas.y_tilt)){
         if(ud_distance < 40) ud_distance++;
 	uint8_t new_ud = map_player_pos()[1];
 	if(prev_ud != new_ud) move_up();
-	//if(ud_distance % 10 == 0) move_up();
       }
       prev_lr = players_location[0];
       prev_ud = players_location[1];
