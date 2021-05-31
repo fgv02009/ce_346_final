@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "nrfx_pwm.h"
 
 // Initialize the LED matrix display
 void led_matrix_init(void);
@@ -29,12 +30,15 @@ void flash_players_location();
 void clear_leds();
 void pre_game_setup();
 void move_lose_led();
+void play_lose_sound();
 uint32_t char_ind;
 enum state{Waiting, Playing, Between};
 enum state game_state;
 uint32_t players_location[2];
 uint32_t lose_location[2];
 
+// PWM configuration
+static const nrfx_pwm_t PWM_INST =  NRFX_PWM_INSTANCE(0);
 
 typedef struct displayConfig {
    char* display_str;

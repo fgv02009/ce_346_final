@@ -16,20 +16,13 @@
 #include "microbit_v2.h"
 #include "lsm303agr.h"
 #include "led_matrix.h"
+#include "nrfx_pwm.h"
 
 // Global variables
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 1, 0);
 uint32_t lr_distance = 0;
 uint32_t ud_distance = 0;
 uint8_t new_coords[2];
-
-//void pin_event_handler(void) {
-  // Clear interrupt event
-//  NRF_GPIOTE->EVENTS_IN[0] = 0;
-
-  // Implement me
-//  printf("button pressed in interrupt\n");
-//}
 
 
 void pin_event_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action){
@@ -59,6 +52,25 @@ uint8_t* map_player_pos(){
 
   return new_coords;
 }
+
+static void pwm_init(void) {
+  // Initialize the PWM
+  // SPEAKER_OUT is the output pin, mark the others as NRFX_PWM_PIN_NOT_USED
+  // Set the clock to 500 kHz, count mode to Up, and load mode to Common
+  // The Countertop value doesn't matter for now. We'll set it in play_tone()
+  // TODO
+  nrfx_pwm_config_t config = {
+    .output_pins = {SPEAKER_OUT, NRFX_PWM_PIN_NOT_USED, NRFX_PWM_PIN_NOT_USED, NRFX_PWM_PIN_NOT_USED},
+    .irq_priority = 4,
+    .base_clock = NRF_PWM_CLK_500kHz,
+    .count_mode = NRF_PWM_MODE_UP,
+    .top_value = NRFX_PWM_DEFAULT_CONFIG_TOP_VALUE,
+    .load_mode = NRF_PWM_LOAD_COMMON,
+    .step_mode = NRF_PWM_STEP_AUTO,
+  };
+  nrfx_pwm_init(&PWM_INST, &config, NULL);
+}
+
 int main(void) {
   printf("Board started!\n");
 
@@ -72,20 +84,8 @@ int main(void) {
   // Initialize the LSM303AGR accelerometer/magnetometer sensor
   lsm303agr_init(&twi_mngr_instance);
   
-  
-// try interrupt with drivers instead -- this is messing with everything - leave out for now
-//  ret_code_t err_code;
-//
-//  if (!nrf_drv_gpiote_is_init())
-//  {
-//    err_code = nrf_drv_gpiote_init();
-//    APP_ERROR_CHECK(err_code);
-//  }
-//  
-//  nrf_drv_gpiote_in_config_t config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
-//  err_code = nrf_drv_gpiote_in_init(14, &config, pin_event_handler);
-//  APP_ERROR_CHECK(err_code);
-//  nrf_drv_gpiote_in_event_enable(14, true);
+  //pwm
+  pwm_init();
 
   led_matrix_init();
   app_timer_init();

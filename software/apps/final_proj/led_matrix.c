@@ -40,6 +40,18 @@ uint8_t seconds_per_level = 7;
 time_t t;
 uint32_t player_flash_count = 0;
 uint32_t display_x_count = 0;
+// Holds duty cycle values to trigger PWM toggle
+nrf_pwm_values_common_t sequence_data[1] = {0};
+
+// Sequence structure for configuring DMA
+nrf_pwm_sequence_t pwm_sequence = {
+  .values.p_common = sequence_data,
+  .length = 1,
+  .repeats = 0,
+  .end_delay = 0,
+};
+
+
 
 void pre_game_setup(){
   app_timer_create(&display_timer, APP_TIMER_MODE_REPEATED, display);
@@ -169,7 +181,43 @@ void lose(){
   app_timer_stop(display_timer);
   app_timer_stop(move_lose_led_timer);
   app_timer_start(display_x_timer, 40, NULL);
+  play_lose_sound();
   level = 1;
+}
+
+void play_lose_sound(){
+  play_tone(233);
+  nrf_delay_ms(500);
+  
+  play_tone(220);
+  nrf_delay_ms(500);
+  
+  play_tone(207);
+  nrf_delay_ms(500);
+  
+  play_tone(195);
+  nrf_delay_ms(1000);
+  
+  // Stop all noises
+  nrfx_pwm_stop(&PWM_INST, true);
+}
+
+void play_tone(uint16_t frequency) {
+  // Stop the PWM (and wait until its finished)
+  nrfx_pwm_stop(&PWM_INST, true);
+  
+  uint16_t countertop = 500000/frequency/10;
+  // Set a countertop value based on desired tone frequency
+  // You can access it as NRF_PWM0->COUNTERTOP
+  NRF_PWM0->COUNTERTOP = countertop;
+  //will repeat 10 times to get 440k
+  //NRF_PWM0->PRESCALER = leave at 0
+
+  // Modify the sequence data to be a 25% duty cycle
+  sequence_data[0] = (NRF_PWM0->COUNTERTOP)/2;
+  pwm_sequence.repeats = 9;
+  // Start playback of the samples and loop indefinitely
+  nrfx_pwm_simple_playback(&PWM_INST, &pwm_sequence, 1, NRFX_PWM_FLAG_LOOP);
 }
 
 
